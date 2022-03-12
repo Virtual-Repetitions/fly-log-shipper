@@ -1,6 +1,6 @@
 # NOTICE
 
-Please note this is a fork of [fly-log-shipper](https://github.com/superfly/fly-log-shipper).
+Please note this is a fork of [fly-log-shipper](https://github.com/superfly/fly-log-shipper). It was forked because we used [overmind](https://github.com/DarthSim/overmind) in our Fly applications and `fly-log-shipper` could not process our `overmind` logs since they were not valid JSON.
 
 This removes support for all providers except Loki in our Vector configuration.
 

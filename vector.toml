@@ -13,15 +13,42 @@ data_dir = "/var/lib/vector/"
   path = "/var/run/vector.sock"
   
 [transforms.log_json]
-  type = "json_parser"
-  inputs = ["fly_socket"]
-  drop_invalid = true
-  field = "message"
+type = "remap"
+inputs = ["fly_socket"]
+source = '''
+log(., level: "info", rate_limit_secs: 0)
+
+. = parse_json!(.message)
+'''
+
+[transforms.log_parser]
+type = "remap"
+inputs = ["log_json"]
+source = '''
+log(., level: "info", rate_limit_secs: 0)
+
+if is_object(.message) == false {
+  log("not an object", level: "info", rate_limit_secs: 0)
+  structured = parse_regex!(.message, r'(?P<app>(dashboard|play-timing-service|system)).*\|\s(?P<message>.*)')
+  . = merge(., structured)
+}
+
+.
+'''
+
+[transforms.debug]
+type = "remap"
+inputs = ["log_parser"]
+source = '''
+log(., level: "info", rate_limit_secs: 0)
+.
+'''
 
 [transforms.loki_json]
   type = "remap"
-  inputs = ["log_json"]
+  inputs = ["log_parser"]
   source = '''
+  log(., level: "info", rate_limit_secs: 0)
   .level = .log.level
   if starts_with(.message, "{") ?? false {
     # parse json messages
@@ -29,11 +56,12 @@ data_dir = "/var/lib/vector/"
     del(.message)
     . |= json
   }
+  log(., level: "info", rate_limit_secs: 0)
   '''
 
 [sinks.blackhole]
   type = "blackhole"
-  inputs = ["log_json"]
+  inputs = ["log_parser"]
   print_interval_secs = 100000
 
 [sinks.fly_log_metrics_prometheus]
