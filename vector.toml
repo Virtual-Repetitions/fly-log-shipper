@@ -1,3 +1,23 @@
+data_dir = "/var/lib/vector/"
+
+[api]
+  enabled = true
+  address = "0.0.0.0:8686"
+
+[sources.fly_log_metrics]
+  type = "internal_metrics"
+
+[sources.fly_socket]
+  type = "socket"
+  mode = "unix" 
+  path = "/var/run/vector.sock"
+  
+[transforms.log_json]
+  type = "json_parser"
+  inputs = ["fly_socket"]
+  drop_invalid = true
+  field = "message"
+
 [transforms.loki_json]
   type = "remap"
   inputs = ["log_json"]
@@ -10,6 +30,17 @@
     . |= json
   }
   '''
+
+[sinks.blackhole]
+  type = "blackhole"
+  inputs = ["log_json"]
+  print_interval_secs = 100000
+
+[sinks.fly_log_metrics_prometheus]
+  type = "prometheus_exporter" # required
+  inputs = ["fly_log_metrics"] # required
+  address = "0.0.0.0:9598" # required
+  default_namespace = "fly-logs" # optional, no default
 
 [sinks.loki]
   type = "loki"
@@ -27,4 +58,3 @@
   labels.fly_app_instance = "{{fly.app.instance}}"
   labels.host = "{{host}}"
   labels.level = "{{level}}"
-

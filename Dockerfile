@@ -16,7 +16,7 @@ FROM ubuntu:20.04
 
 RUN mkdir -p /etc/vector
 COPY . .
-COPY vector-configs/* /etc/vector/ 
+COPY vector.toml /etc/vector/vector.toml
 RUN apt-get update && apt-get install -y socat ca-certificates
 COPY --from=flylogs /root/.vector/bin/vector /usr/local/bin/vector
 COPY --from=flylogs /go/src/github.com/superfly/fly-log-stream/fly-logs /usr/local/bin/fly-logs
