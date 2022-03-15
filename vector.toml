@@ -16,32 +16,7 @@ data_dir = "/var/lib/vector/"
 type = "remap"
 inputs = ["fly_socket"]
 source = '''
-log(., level: "info", rate_limit_secs: 0)
-
 . = parse_json!(.message)
-'''
-
-[transforms.log_parser]
-type = "remap"
-inputs = ["log_json"]
-source = '''
-log(., level: "info", rate_limit_secs: 0)
-
-if is_object(.message) == false {
-  log("not an object", level: "info", rate_limit_secs: 0)
-  structured = parse_regex!(.message, r'(?P<app>(dashboard|play-timing-service|system)).*\|\s(?P<message>.*)')
-  . = merge(., structured)
-}
-
-.
-'''
-
-[transforms.debug]
-type = "remap"
-inputs = ["log_parser"]
-source = '''
-log(., level: "info", rate_limit_secs: 0)
-.
 '''
 
 [transforms.loki_json]
