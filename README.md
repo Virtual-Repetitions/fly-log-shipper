@@ -50,23 +50,31 @@ The `fly-logs` application sends logs to a unix socket which is created by Vecto
 
 # Debugging Locally
 
-The simplest approach to debugging Vector configuration locally is to use `stdin` as the source and print to console.
+To debug locally, you must be able to connect to the running Fly.io NATS instance using Wireguard. Follow the steps [here](https://fly.io/docs/reference/private-networking/#private-network-vpn) to tunnel into your organization's Fly Wireguard network.
 
-```toml
-[sources.in]
-type = "stdin"
-
-# Add your transforms here
-
-[sinks.out]
-inputs = ["in"]
-type = "console"
-encoding.codec = "json"
+Take note of your organization's Wireguard DNS server address from the configuration file:
 ```
+[Interface]
+PrivateKey = [redacted]
+Address = fdaa:0:18:a7b:d6b:0:a:2/120
+DNS = fdaa:0:18::3
+```
+In this example, it'd be `fdaa:0:18::3`
 
-And then run this command to pipe stdin to Vector:
-```
-echo 'dashboard           | {"app":"dashboard","level":null,"message":"Message here","metadata":{"depth":20,"erl_level":"warning"},"severity":"warn","time":"2022-03-11T20:17:45.456Z"}' | vector --config ./vector.toml
-```
+## Docker
+
+
+1. Build the image. `docker build --tag fly-log-shipper:local-latest --platform linux/amd64 --load .`
+1. Run the image. TODO: figure this out. See post [here](https://community.fly.io/t/connect-local-docker-container-to-wireguard/4387)
+
+## NATS CLI
+
+A quick option to test your connection is to download the [NATS CLI](https://github.com/nats-io/natscli). Run `nats -s 'nats://[fdaa:0:18::3]:4223' --user $ORG --password $(fly auth token) sub 'logs.>' to connect locally. See above for determining the proper DNS addres.
+
+## Connect fly-log-shipper
+
+To connect `fly-log-shipper` locally, run `sudo ORG=org-slug ACCESS_TOKEN=$(fly auth token) ORG_DNS_IP=fdaa:0:18::3 SUBJECT="logs.>" ./start-fly-log-transporter.sh`. Please note you should have a local copy of Vector installed and available on your path.
+
+## Debugging VRL
 
 To test your VRL code, check out [The VRL Playground](https://vrl-web.netlify.app/).
