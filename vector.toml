@@ -36,7 +36,7 @@ source = '''
 
 [sinks.blackhole]
   type = "blackhole"
-  inputs = ["log_parser"]
+  inputs = ["log_json"]
   print_interval_secs = 100000
 
 [sinks.fly_log_metrics_prometheus]
