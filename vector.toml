@@ -21,7 +21,7 @@ source = '''
 
 [transforms.loki_json]
   type = "remap"
-  inputs = ["log_parser"]
+  inputs = ["log_json"]
   source = '''
   log(., level: "info", rate_limit_secs: 0)
   .level = .log.level
